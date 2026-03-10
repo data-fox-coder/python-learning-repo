@@ -11,7 +11,6 @@ from sqlalchemy import (
 from utils import clean_903_table
 from datetime import datetime
 
-
 # Initialise session variable
 
 collection_year = 2014
