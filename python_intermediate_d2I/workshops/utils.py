@@ -10,12 +10,11 @@ def format_dates(column):
         return column
     except:
         raise ValueError(
-            f"Unknown date format in {column.name}, expected dd/mm/YYYY"
+            f"Invalid date format in {column.name}, expected dd/mm/YYYY"
         )
     
-
 def calculate_age_buckets(age):
-    # Used to make age buckets matching published data
+    # Used to make age buckets to mirror published data
     if age < 1:
         return "a) Under 1 year"
     elif age < 5:
@@ -28,7 +27,6 @@ def calculate_age_buckets(age):
         return "e) 16 years and over"
     else:
         return "f) Age error"
-
 
 def clean_903_table(df: pd.DataFrame, collection_end: pd.Timestamp):
     clean_df = df.copy()
@@ -51,6 +49,5 @@ def clean_903_table(df: pd.DataFrame, collection_end: pd.Timestamp):
         )
 
         clean_df['AGE_BUCKETS'] = clean_df['AGE'].apply(calculate_age_buckets)
-
 
     return clean_df
