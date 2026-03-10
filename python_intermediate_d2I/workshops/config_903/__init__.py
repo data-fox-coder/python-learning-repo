@@ -1,6 +1,4 @@
-# We need to init so Python knows that the folder is a module and we can import within it,
-# but it's also a really good place to store variables that could be used
-# all over the module
+# reusable variables to be used for our pipeline
 
 from enum import Enum
 
