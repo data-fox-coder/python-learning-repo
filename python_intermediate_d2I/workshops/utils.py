@@ -1,6 +1,7 @@
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 from config_903 import DateCols903, EthnicSubcategories
+import numpy as np
 
 def format_dates(column):
     column.replace(r"^\s*$", pd.NaT, regex=True)
@@ -51,3 +52,33 @@ def clean_903_table(df: pd.DataFrame, collection_end: pd.Timestamp):
         clean_df['AGE_BUCKETS'] = clean_df['AGE'].apply(calculate_age_buckets)
 
     return clean_df
+
+def group_calcuation(df, column, measure_name):
+    '''
+    Function to group a dataframe by a column and calculate count and percentage for each group.
+
+    '''
+    grouped = df.groupby(column).size()
+    grouped = grouped.to_frame(f'{measure_name} - Count').reset_index()
+    grouped = grouped.rename(columns={column:'Value'})
+
+    grouped['Header - Ethncities - Percentage'] = (grouped[f'{measure_name} - Count'] / 
+                                                    grouped[f'{measure_name} - Count'].sum()) * 100
+    return grouped
+
+def time_difference(start_col, end_col, business_days=False):   
+    '''
+    Function to calculate the time difference between two date columns in days.
+    '''
+    if business_days:
+        # np.busday_count can only use datetime64[D] format, 
+        # so we need to convert the columns to this format
+        time_diff = np.busday_count(
+            start_col.values.astype('datetime64[D]'), 
+            end_col.values.astype('datetime64[D]')
+        )
+    else:
+        time_diff = end_col - start_col
+        time_diff = time_diff / pd.Timedelta(days=1)
+    
+    return time_diff.astype('int')
