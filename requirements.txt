@@ -1,3 +1,15 @@
+certifi==2026.2.25
+charset-normalizer==3.4.7
+greenlet==3.4.0
+idna==3.11
+numpy==2.4.4
 pandas==2.2.3
-SQLAlchemy==2.0.28
 python-dateutil==2.9.0
+python-dotenv==1.2.2
+pytz==2026.1.post1
+requests==2.33.1
+six==1.17.0
+SQLAlchemy==2.0.28
+typing_extensions==4.15.0
+tzdata==2026.1
+urllib3==2.6.3
