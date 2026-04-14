@@ -1,2 +1,7 @@
+# Python environment and temporary files
 .venv/
 __pycache__/
+
+# Local databases (Data security & size management)
+*.db
+*.sqlite
