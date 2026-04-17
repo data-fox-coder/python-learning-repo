@@ -1,2 +1,3 @@
 # python-learning-repo
-To store Python code from learning at D2I workshops.
+
+Repo for all my Python learning projects.
