@@ -4,3 +4,4 @@ ipykernel
 sqlalchemy
 matplotlib
 streamlit
+python-dotenv
