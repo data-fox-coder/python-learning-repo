@@ -6,3 +6,4 @@ matplotlib
 streamlit
 python-dotenv
 pyyaml
+numpy

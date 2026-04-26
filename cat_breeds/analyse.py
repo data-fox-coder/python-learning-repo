@@ -13,6 +13,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import os
+import numpy as np
 
 DB_PATH    = "data/breeds.db"
 OUTPUT_DIR = "output"
@@ -89,30 +90,44 @@ def chart_trait_averages(df: pd.DataFrame) -> None:
 
 def chart_intelligence_vs_energy(df: pd.DataFrame) -> None:
     """Scatter plot: intelligence vs energy level, coloured by affection."""
-    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Add jitter to prevent overplotting
+    jitter = 0.15
+    x = df["energy_level"] + np.random.uniform(-jitter, jitter, len(df))
+    y = df["intelligence"] + np.random.uniform(-jitter, jitter, len(df))
+
+    fig, ax = plt.subplots(figsize=(9, 6))
     scatter = ax.scatter(
-        df["energy_level"], df["intelligence"],
+        x, y,
         c=df["affection_level"], cmap="YlOrRd",
         s=60, edgecolors="white", linewidth=0.5, alpha=0.85,
     )
-    plt.colorbar(scatter, ax=ax, label="Affection Level")
+    cbar = plt.colorbar(scatter, ax=ax, label="Affection Level")
+    cbar.ax.yaxis.label.set_size(10)
 
-    # Label a few interesting outliers
-    for _, row in df.iterrows():
-        if row["intelligence"] == 5 and row["energy_level"] == 5:
-            ax.annotate(row["name"], (row["energy_level"], row["intelligence"]),
-                        fontsize=7, alpha=0.7,
-                        xytext=(4, 4), textcoords="offset points")
+# Label only the most affectionate breed at intelligence=5, energy=5
+    top = df[(df["intelligence"] == 5) & (df["energy_level"] == 5)].nlargest(1, "affection_level")
+    for _, row in top.iterrows():
+        ax.annotate(
+            row["name"],
+            (row["energy_level"], row["intelligence"]),
+            fontsize=8,
+            fontweight="bold",
+            xytext=(8, 4),
+            textcoords="offset points",
+            arrowprops=dict(arrowstyle="-", color="grey", lw=0.8),
+        )
 
     ax.set_title("Intelligence vs Energy Level\n(colour = affection level)",
                  fontweight="bold", pad=12)
     ax.set_xlabel("Energy Level (1-5)")
     ax.set_ylabel("Intelligence (1-5)")
+    ax.set_xlim(0.5, 5.5)
+    ax.set_ylim(0.5, 5.5)
     ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
     ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
     ax.spines[["top", "right"]].set_visible(False)
     save(fig, "intelligence_vs_energy.png")
-
 
 def chart_hypoallergenic_breakdown(df: pd.DataFrame) -> None:
     """Pie chart: hypoallergenic vs non-hypoallergenic breeds."""
