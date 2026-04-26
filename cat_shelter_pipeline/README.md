@@ -93,3 +93,7 @@ python pipeline.py
 See [`requirements.txt`](../requirements.txt) in the root of the repo.
 
 Key packages: `requests`, `pandas`, `python-dotenv`
+
+## Sample Output
+
+![Available Cats by Age Group](output/age_distribution.png)
