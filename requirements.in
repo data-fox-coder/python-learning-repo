@@ -5,3 +5,4 @@ sqlalchemy
 matplotlib
 streamlit
 python-dotenv
+pyyaml
