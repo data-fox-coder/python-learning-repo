@@ -79,6 +79,9 @@ def _execute_pipeline_steps(config: dict) -> bool:
 
 def _run_pipeline() -> bool:
     """Load config and handle top-level UI pipeline exceptions."""
+    # Ensure directory path exists before running write operations
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    
     config = load_config()
     setup_logging(config)
 
@@ -130,6 +133,9 @@ def ensure_fresh_data() -> None:
 @st.cache_data(ttl=REFRESH_HOURS * 3600)
 def load_data() -> pd.DataFrame:
     """Load cats from the gold SQLite layer. Cached for REFRESH_HOURS."""
+    if not DB_PATH.exists():
+        raise FileNotFoundError(f"Database file not found at {DB_PATH}")
+
     with sqlite3.connect(DB_PATH) as conn:
         df = pd.read_sql(
             "SELECT * FROM cats",
@@ -344,11 +350,11 @@ if DB_PATH.exists():
 
 # ---- Manual refresh button ----
 if st.button("🔄 Refresh Data"):
+    st.cache_data.clear()
     ensure_fresh_data()
     st.rerun()
-
-# ---- Automatic call removed ----
-# ensure_fresh_data()
+    
+ensure_fresh_data()
 
 df_raw = load_data()
 df = apply_filters(df_raw)
