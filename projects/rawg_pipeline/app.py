@@ -12,6 +12,7 @@ import os
 import config
 import duckdb
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 # 1. PAGE CONFIGURATION (Must be the absolute first Streamlit command executed)
@@ -25,7 +26,7 @@ st.set_page_config(
 
 # 2. DATABASE CONNECTION (Using cache_resource for the connection asset)
 @st.cache_resource
-def get_db_connection(path):
+def get_db_connection(path: str) -> duckdb.DuckDBPyConnection | None:
     """Creates a persistent, read-only connection to the DuckDB file."""
     if os.path.exists(path) and os.path.getsize(path) > 0:
         return duckdb.connect(path, read_only=True)
@@ -56,11 +57,42 @@ try:
     ).df()
     df_platform_counts = conn.execute(
         "SELECT * FROM main_gold.gold_platform_game_counts ORDER BY popularity_rank"
-    ).df()    
+    ).df()
 except Exception as e:  # noqa: BLE001
     st.error("⚠️ Could not read Gold layer views from DuckDB.")
     st.sidebar.error(f"Error compilation logs: {e}")
     st.stop()
+
+
+# ---------------------------------------------------------------------------
+# Theme Helper
+# ---------------------------------------------------------------------------
+
+
+def apply_plotly_theme(fig: go.Figure) -> go.Figure:
+    """Applies transparent backgrounds and adaptive text/grid colors to a Plotly figure."""
+    theme_base = st.get_option("theme.base")
+    bg_color = st.get_option("theme.backgroundColor")
+
+    # Default to dark mode if theme is undetected, explicitly 'dark', or uses a dark background hex
+    is_dark = (
+        theme_base == "dark"
+        or theme_base is None
+        or (bg_color and (bg_color.startswith("#0") or bg_color.startswith("#1")))
+    )
+
+    text_color = "white" if is_dark else "#262730"
+    grid_color = "rgba(255, 255, 255, 0.15)" if is_dark else "rgba(0, 0, 0, 0.1)"
+
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"color": text_color},
+        xaxis={"gridcolor": grid_color, "zerolinecolor": grid_color},
+        yaxis={"gridcolor": grid_color, "zerolinecolor": grid_color},
+    )
+    return fig
+
 
 # 3. SIDEBAR FILTERS
 st.sidebar.title("🎮 RAWG Dashboard Controls")
@@ -115,9 +147,8 @@ if not filtered_games.empty:
     fig_scatter.update_layout(
         margin={"l": 40, "r": 40, "t": 20, "b": 40},
         height=650,
-        xaxis={"showgrid": True, "gridcolor": "rgba(255,255,255,0.1)"},
-        yaxis={"showgrid": True, "gridcolor": "rgba(255,255,255,0.1)"},
     )
+    apply_plotly_theme(fig_scatter)
 
     st.plotly_chart(fig_scatter, width="stretch")
 else:
@@ -133,13 +164,18 @@ if not df_games.empty:
         color_discrete_sequence=["#b44fff"],
     )
 
-    fig_hist.update_layout(margin={"l": 40, "r": 40, "t": 20, "b": 40}, height=400, bargap=0.05)
+    fig_hist.update_layout(
+        margin={"l": 40, "r": 40, "t": 20, "b": 40}, height=400, bargap=0.05
+    )
+    apply_plotly_theme(fig_hist)
 
     st.plotly_chart(fig_hist, width="stretch")
 
 st.subheader("🕹️ Most Popular Platforms by Game Count")
 if not df_platform_counts.empty:
-    top_platforms = df_platform_counts.sort_values("game_count", ascending=False).head(15)
+    top_platforms = df_platform_counts.sort_values(
+        "game_count", ascending=False
+    ).head(15)
     fig_platforms = px.bar(
         top_platforms,
         x="name",
@@ -151,6 +187,8 @@ if not df_platform_counts.empty:
     fig_platforms.update_layout(
         margin={"l": 40, "r": 40, "t": 20, "b": 40}, height=450, xaxis_tickangle=-45
     )
+    apply_plotly_theme(fig_platforms)
+
     st.plotly_chart(fig_platforms, width="stretch")
 
 st.markdown("---")
