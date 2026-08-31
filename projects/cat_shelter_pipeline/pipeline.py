@@ -255,18 +255,8 @@ def save_silver(df: pd.DataFrame, config: dict) -> None:
 
 
 def load_cat_data(df: pd.DataFrame, config: dict) -> None:
-    """
-    Upsert the silver DataFrame into the gold SQLite database.
-    Uses INSERT OR REPLACE semantics keyed on the 'id' column.
-    """
-    if df.empty:
-        logger.warning("Gold: DataFrame is empty, skipping load.")
-        return
-
-    if "id" not in df.columns:
-        logger.error(
-            "Gold: 'id' column not found — cannot upsert without a primary key."
-        )
+    """Upsert the silver DataFrame into the gold SQLite database."""
+    if df.empty or "id" not in df.columns:
         return
 
     db_path = PROJECT_ROOT / config["layers"]["gold"]["path"]
@@ -275,8 +265,7 @@ def load_cat_data(df: pd.DataFrame, config: dict) -> None:
     engine = create_engine(f"sqlite:///{db_path}")
     table_name = "cats"
 
-    # SQLite cannot bind Python lists or dicts — serialise any such columns
-    # to JSON strings so they survive the round-trip and remain readable.
+    # Serialize nested list/dict columns to JSON
     df = df.copy()
     for col in df.columns:
         if df[col].apply(lambda v: isinstance(v, (list | dict))).any():
@@ -284,16 +273,23 @@ def load_cat_data(df: pd.DataFrame, config: dict) -> None:
                 lambda v: json.dumps(v) if isinstance(v, (list | dict)) else v
             )
 
-    with engine.begin() as conn:
-        # Ensure the table exists with the correct schema by doing an initial
-        # to_sql on an empty slice — this is a no-op if the table already exists.
-        # Kept as 'append' to avoid dropping existing data; schema changes should
-        # be managed explicitly if needed.
-        df.head(0).to_sql(table_name, conn, if_exists="append", index=False)
+    cols_schema = []
+    for col in df.columns:
+        if col == "id":
+            cols_schema.append(f'"{col}" TEXT PRIMARY KEY')
+        else:
+            cols_schema.append(f'"{col}" TEXT')
 
-        # Upsert row by row using SQLite's INSERT OR REPLACE.
+    create_table_sql = text(
+        f"CREATE TABLE IF NOT EXISTS {table_name} ({', '.join(cols_schema)})"
+    )
+
+    with engine.begin() as conn:
+        # Create table with PRIMARY KEY constraint if it doesn't exist
+        conn.execute(create_table_sql)
+
         placeholders = ", ".join([f":{col}" for col in df.columns])
-        columns = ", ".join(df.columns)
+        columns = ", ".join([f'"{col}"' for col in df.columns])
         upsert_sql = text(
             f"INSERT OR REPLACE INTO {table_name} ({columns}) VALUES ({placeholders})"
         )
