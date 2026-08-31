@@ -63,6 +63,7 @@ The Streamlit dashboard reads from the gold SQLite layer and includes:
 - **Activity levels** — bar chart
 - **Compatibility & characteristics** — % of cats OK with kids, cats, dogs, housetrained, special needs
 - **Sidebar filters** — filter all charts by age group, gender, and activity level
+- **Adaptive Matplotlib Visualizations:** Custom theme helper (`apply_chart_theme`) that dynamically detects Streamlit's base environment (light/dark mode), adjusting text, tick labels, and axis spines on transparent figure canvases without manual toggles.
 
 The dashboard triggers the pipeline automatically on first load and refreshes data every 24 hours, using the `RESCUEGROUPS_API_KEY` secret configured in Streamlit Community Cloud.
 
