@@ -57,7 +57,7 @@ def get_data_source() -> str | None:
         return None
     with flag_path.open("r") as fh:
         return json.load(fh).get("source")
-    
+
 
 def _execute_pipeline_steps(config: dict) -> bool:
     """Run sequential ETL steps without try/except wrapping."""
@@ -81,7 +81,7 @@ def _run_pipeline() -> bool:
     """Load config and handle top-level UI pipeline exceptions."""
     # Ensure directory path exists before running write operations
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    
+
     config = load_config()
     setup_logging(config)
 
@@ -164,6 +164,7 @@ def load_data() -> pd.DataFrame:
 
     return df
 
+
 # ---------------------------------------------------------------------------
 # Filters
 # ---------------------------------------------------------------------------
@@ -217,25 +218,68 @@ def show_metrics(df: pd.DataFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Charts (with empty-data protection)
+# Charts (with adaptive theme support)
 # ---------------------------------------------------------------------------
+
+
+def apply_chart_theme(fig: plt.Figure, ax: plt.Axes) -> None:
+    """Apply transparent background and adaptive text/spine colors based on Streamlit theme."""
+    theme_base = st.get_option("theme.base")
+    bg_color = st.get_option("theme.backgroundColor")
+
+    # Default to dark mode if theme is undetected, explicitly 'dark', or uses a dark background hex
+    is_dark = (
+        theme_base == "dark"
+        or theme_base is None
+        or (bg_color and bg_color.startswith("#0") or bg_color.startswith("#1"))
+    )
+
+    text_color = "white" if is_dark else "#262730"
+    spine_color = "white" if is_dark else "#262730"
+
+    # Transparent canvas
+    fig.patch.set_facecolor("none")
+    ax.set_facecolor("none")
+
+    # Titles and labels
+    ax.title.set_color(text_color)
+    ax.xaxis.label.set_color(text_color)
+    ax.yaxis.label.set_color(text_color)
+
+    # Ticks and tick labels
+    ax.tick_params(colors=text_color, which="both")
+    plt.setp(ax.get_xticklabels(), color=text_color)
+    plt.setp(ax.get_yticklabels(), color=text_color)
+
+    # Spines
+    for spine in ax.spines.values():
+        if spine.get_visible():
+            spine.set_color(spine_color)
+
+    # Force bar labels and text annotations to match
+    for child in ax.get_children():
+        if isinstance(child, plt.Text):
+            child.set_color(text_color)
 
 
 def chart_age_distribution(df: pd.DataFrame) -> plt.Figure:
     if df.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, "No data available", ha="center")
+        apply_chart_theme(fig, ax)
         return fig
 
     order = ["Baby", "Young", "Adult", "Senior"]
     counts = df["attributes_agegroup"].value_counts().reindex(order, fill_value=0)
     fig, ax = plt.subplots(figsize=(7, 4))
-    bars = ax.bar(counts.index, counts.values, color="#E07B54", edgecolor="white")
+    bars = ax.bar(counts.index, counts.values, color="#E07B54", edgecolor="none")
     ax.bar_label(bars, padding=4, fontsize=9)
     ax.set_title("Available Cats by Age Group", fontweight="bold", pad=12)
     ax.set_ylabel("Number of cats")
     ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
     ax.spines[["top", "right"]].set_visible(False)
+
+    apply_chart_theme(fig, ax)
     return fig
 
 
@@ -243,15 +287,18 @@ def chart_top_breeds(df: pd.DataFrame, top_n: int = 10) -> plt.Figure:
     if df.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, "No data available", ha="center")
+        apply_chart_theme(fig, ax)
         return fig
 
     counts = df["attributes_breedprimary"].value_counts().head(top_n).sort_values()
     fig, ax = plt.subplots(figsize=(8, 5))
-    bars = ax.barh(counts.index, counts.values, color="#5B8DB8", edgecolor="white")
+    bars = ax.barh(counts.index, counts.values, color="#5B8DB8", edgecolor="none")
     ax.bar_label(bars, padding=4, fontsize=9)
     ax.set_title(f"Top {top_n} Breeds in Shelters", fontweight="bold", pad=12)
     ax.set_xlabel("Number of cats")
     ax.spines[["top", "right"]].set_visible(False)
+
+    apply_chart_theme(fig, ax)
     return fig
 
 
@@ -259,19 +306,27 @@ def chart_gender_split(df: pd.DataFrame) -> plt.Figure:
     if df.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, "No data available", ha="center")
+        apply_chart_theme(fig, ax)
         return fig
 
     counts = df["attributes_sex"].fillna("Unknown").value_counts()
     fig, ax = plt.subplots(figsize=(5, 5))
+    
+    theme_base = st.get_option("theme.base")
+    label_color = "white" if theme_base == "dark" else "#262730"
+
     ax.pie(
         counts.values,
         labels=counts.index,
         autopct="%1.1f%%",
         colors=["#5B8DB8", "#E07B54", "#A8C5A0"],
         startangle=90,
-        wedgeprops={"edgecolor": "white", "linewidth": 1.5},
+        wedgeprops={"edgecolor": "none", "linewidth": 1.5},
+        textprops={"color": label_color},
     )
     ax.set_title("Gender Split", fontweight="bold")
+
+    apply_chart_theme(fig, ax)
     return fig
 
 
@@ -279,15 +334,18 @@ def chart_activity_levels(df: pd.DataFrame) -> plt.Figure:
     if df.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, "No data available", ha="center")
+        apply_chart_theme(fig, ax)
         return fig
 
     counts = df["attributes_activitylevel"].value_counts()
     fig, ax = plt.subplots(figsize=(6, 4))
-    bars = ax.bar(counts.index, counts.values, color="#5B8DB8", edgecolor="white")
+    bars = ax.bar(counts.index, counts.values, color="#5B8DB8", edgecolor="none")
     ax.bar_label(bars, padding=4, fontsize=9)
     ax.set_title("Cats by Activity Level", fontweight="bold", pad=12)
     ax.set_ylabel("Number of cats")
     ax.spines[["top", "right"]].set_visible(False)
+
+    apply_chart_theme(fig, ax)
     return fig
 
 
@@ -295,6 +353,7 @@ def chart_compatibility(df: pd.DataFrame) -> plt.Figure:
     if df.empty:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, "No data available", ha="center")
+        apply_chart_theme(fig, ax)
         return fig
 
     total = len(df)
@@ -317,13 +376,15 @@ def chart_compatibility(df: pd.DataFrame) -> plt.Figure:
         for c in cols
     ]
     fig, ax = plt.subplots(figsize=(8, 4))
-    bars = ax.barh(labels, pcts, color="#A8C5A0", edgecolor="white")
+    bars = ax.barh(labels, pcts, color="#A8C5A0", edgecolor="none")
     ax.bar_label(bars, fmt="%.1f%%", padding=4, fontsize=9)
     ax.set_xlim(0, 110)
     ax.set_title(
         "Compatibility & Characteristics (% of all cats)", fontweight="bold", pad=12
     )
     ax.spines[["top", "right"]].set_visible(False)
+
+    apply_chart_theme(fig, ax)
     return fig
 
 
@@ -353,7 +414,7 @@ if st.button("🔄 Refresh Data"):
     st.cache_data.clear()
     ensure_fresh_data()
     st.rerun()
-    
+
 ensure_fresh_data()
 
 df_raw = load_data()
@@ -370,16 +431,16 @@ st.divider()
 
 col1, col2 = st.columns(2)
 with col1:
-    st.pyplot(chart_age_distribution(df))
+    st.pyplot(chart_age_distribution(df), transparent=True)
 with col2:
-    st.pyplot(chart_gender_split(df))
+    st.pyplot(chart_gender_split(df), transparent=True)
 
 col3, col4 = st.columns(2)
 with col3:
-    st.pyplot(chart_top_breeds(df))
+    st.pyplot(chart_top_breeds(df), transparent=True)
 with col4:
-    st.pyplot(chart_activity_levels(df))
+    st.pyplot(chart_activity_levels(df), transparent=True)
 
 col5, _ = st.columns(2)
 with col5:
-    st.pyplot(chart_compatibility(df))
+    st.pyplot(chart_compatibility(df), transparent=True)
