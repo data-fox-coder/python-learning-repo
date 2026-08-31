@@ -85,6 +85,11 @@ streamlit run app.py
 
 If `rawg_data.duckdb` is missing, the app will display an error directing you to run `run_pipeline.py` first.
 
+**Dashboard Highlights & Visualizations:**
+
+- **Theme-Aware Plotly Charts** — custom `apply_plotly_theme` helper that applies transparent background layouts (`paper_bgcolor`/`plot_bgcolor`) and dynamically adjusts text contrast and grid opacity based on native Streamlit light/dark theme switching
+- **Modern Layout Architecture** — updated using zero-deprecation Streamlit parameters (`width="stretch"` for full-width charts and interactive dataframes)
+
 > **Note for GitHub Codespaces:** Streamlit keeps running in the background even after you close the forwarded port tab. Stop it with `Ctrl+C` in the terminal before ending your Codespaces session, otherwise it will keep consuming compute hours on your Codespaces usage quota.
 
 ---
