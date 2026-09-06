@@ -24,6 +24,13 @@
       "settings": {
         "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
       }
+    },
+    {
+      "name": "📦 CQC Test",
+      "path": "projects/cqc_test",
+      "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
+      }
     }
   ],
   "settings": {
