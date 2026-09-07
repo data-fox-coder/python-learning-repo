@@ -1,7 +1,7 @@
 """
-CQC Location — Syndication API
+CQC Provider — Syndication API
 ================================================
-Loads location data from CQC API and loads into a .csv file. This file will then be loaded into Snowflake as Snowflake trial account does not allow direct API access.
+Loads provider data from CQC API and loads into a .csv file. This file will then be loaded into Snowflake as Snowflake trial account does not allow direct API access.
 
 Requires:
     CQC_API_KEY set as a Codespaces secret (or in a .env file)
@@ -30,7 +30,12 @@ response.raise_for_status()
 
 data = response.json()
 
-provider_df = pd.json_normalize(data)
+provider_df = pd.DataFrame([data])
+
+provider_df = provider_df.explode("locationIds")
+
+provider_df = provider_df.rename(columns={"locationIds": "locationId"})
+
 provider_df.to_csv("cqc_provider.csv", index=False)
 
 print(provider_df)
