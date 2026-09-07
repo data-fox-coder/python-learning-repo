@@ -7,3 +7,4 @@ python-dotenv==1.2.3
 requests==2.34.2
 smmap==5.0.2
 urllib3==2.7.0
+pandas==2.2.2
