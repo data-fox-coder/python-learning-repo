@@ -31,6 +31,9 @@ response.raise_for_status()
 data = response.json()
 
 location_df = pd.json_normalize(data)
+
+location_df = location_df.explode("reports")
+                                                                    
 location_df.to_csv("cqc_location.csv", index=False)
 
 print(location_df)
