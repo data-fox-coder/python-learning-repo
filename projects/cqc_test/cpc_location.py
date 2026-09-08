@@ -1,7 +1,7 @@
 """
 CQC Location — Syndication API
 ================================================
-Loads location data from CQC API and loads into a .csv file and shows each CQC report as a new row in the resulting .csv file.
+Loads location data from CQC API and loads into a .csv file for a location and its reports, showing each CQC report as a new row in a second .csv file.
 
 This file will then be loaded into Snowflake as Snowflake trial account does not allow direct API access.
 
@@ -36,14 +36,19 @@ data = response.json()
 
 # print(data.keys())
 
+location_df = pd.DataFrame([data])
+
 reports_df = pd.json_normalize(
     data,                    # original dict
     record_path="reports",
     meta=["locationId"],
     errors="ignore"
 )
-                                                              
-reports_df.to_csv("cqc_location.csv", index=False)
 
-# Print the dataframe for sense check and to verify that the reports have been extracted correctly
+location_df.to_csv("cqc_provider.csv", index=False)                                                              
+reports_df.to_csv("cqc_reports.csv", index=False)
+
+# Print the dataframes for sense checking and to verify that the reports have been extracted correctly
+print(location_df)
 print(reports_df)
+print(reports_df.shape)
