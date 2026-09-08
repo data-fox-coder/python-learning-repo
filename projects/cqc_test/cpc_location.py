@@ -45,7 +45,7 @@ reports_df = pd.json_normalize(
     errors="ignore"
 )
 
-location_df.to_csv("cqc_provider.csv", index=False)                                                              
+location_df.to_csv("cqc_location.csv", index=False)                                                              
 reports_df.to_csv("cqc_reports.csv", index=False)
 
 # Print the dataframes for sense checking and to verify that the reports have been extracted correctly
