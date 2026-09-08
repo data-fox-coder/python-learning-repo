@@ -13,6 +13,7 @@ Usage:
 
 import os
 
+import pandas as pd
 import requests
 from dotenv import load_dotenv
 
@@ -21,7 +22,7 @@ load_dotenv()
 CQC_API_KEY = os.environ["CQC_API_KEY"]
 
 response = requests.get(
-    "https://api.service.cqc.org.uk/public/v1/providers/1-101716203",
+    "https://api.service.cqc.org.uk/public/v1/locations/1-111561368",
     headers={'Ocp-Apim-Subscription-Key': CQC_API_KEY},
 )
 
@@ -29,4 +30,6 @@ response.raise_for_status()
 
 data = response.json()
 
+df = pd.DataFrame([data])
 print(data)
+print(df)
